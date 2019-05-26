@@ -21,6 +21,9 @@ main:
 @utilizando la biblioteca GPIO (gpio0.s)
 bl GetGpioAddress     @solo se llama una vez
 
+decenas     .req r10
+unidades    .req r11
+
 @Botón DECENAS
 @GPIO para lectura (entrada) puerto 2
 mov r0,#2
@@ -94,6 +97,10 @@ mov r1,#1
 bl SetGpioFunction
 
 ciclo:
+    @Iniciar
+    mov decenas,#0  @Decenas
+    mov unidades,#0  @Unidades
+
     @@Apagar LED.
     mov r0,#17
     mov r1,#0
@@ -107,14 +114,13 @@ ciclo:
 
     @@Por software
     cmp r5,#0x31    @Comparar con '1'
-    moveq r11,#10
-    beq unSegundo
+    beq Software
 
     @@Por hardware
     cmp r5,#0x32    @Comparar con '2'
-    moveq r11,#6
-    beq dosSegundos
+    beq Hardware
 
+    @Salir del programa
     cmp r5,#0x33    @Comparar con '3'
     beq fin
 
@@ -128,94 +134,106 @@ Software:
     ldr r1,=ingreso
     bl scanf
 
-    strb r11,[r1]
+    strb r9,[r1]
 
-    cmp r11,#100
+    cmp r9,#100
     bge error_ingreso
 
-    mov r0, r11
+    mov r0,r9
     bl Division
 
-    mov r10,r1     @ RESIDUO / UNIDADES
-    mov r11,r0     @ COCIENTE / DECENAS
+    mov decenas,r0     @ COCIENTE / DECENAS
+    mov unidades,r1     @ RESIDUO / UNIDADES
 
     cicloUnidadesSoftware:
-        sub r10,#1
+        sub unidades,#1
         bl wait
 
         @@Cambiar Display2
 
-        cmp r10,#0
+        cmp unidades,#0
         beq cicloDecenasSoftware
         b cicloUnidadesSoftware
 
     cicloDecenasSoftware:
-        sub r11,#1
-        mov r10,#9
+        sub decenas,#1
+        mov unidades,#9
 
         @Cambiar Display decenas
         @Cambiar Display unidades
 
-        cmp r11,#0
+        cmp decenas,#0
         blt completado
         b cicloUnidadesSoftware
 
 
 Hardware:
-    mov r10,#0  @Decenas
-    mov r11,#0  @Unidades
-
     @@ Verificar botón de decenas
     mov r0,#2
     bl GetGpio
     mov r5,r0
     cmp r5,#0
-    addeq r10,#1
+    bne sumaDecenas
 
     @@ Verificar botón de unidades
     mov r0,#3
     bl GetGpio
     mov r5,r0
     cmp r5,#0
-    addeq,R10,#1
+    bne sumaUnidades
 
     @@ Verificar botón de decenas
-    mov r0,#2
+    mov r0,#4
     bl GetGpio
     mov r5,r0
     cmp r5,#0
-    addeq r10,#1
+    bne cicloUnidadesHardware
 
-    verificarBotonDecenas:
+    sumaDecenas:
+        cmp decenas,#9
+        addle decenas,#1
+        movgt decenas,#0
 
+        @Mostrar en display decenas
 
-    verificarBotonUnidades:
+    sumaUnidades:
+        @Suma a unidades
+        cmp unidades,#9
+        addle unidades,#1
+        movgt unidades,#0
 
+        @Mostrar en display decenas
+
+        b Hardware
 
     cicloUnidadesHardware:
-        sub r10,#1
+        sub unidades,#1
         bl wait
 
         @@Cambiar Display2
 
-        cmp r10,#0
+        cmp unidades,#0
         beq cicloDecenasHardware
         b cicloUnidadesHardware
 
     cicloDecenasHardware:
-        sub r11,#1
-        mov r10,#9
+        sub decenas,#1
+        mov unidades,#9
 
         @Cambiar Display decenas
         @Cambiar Display unidades
 
-        cmp r11,#0
+        cmp decenas,#0
         blt completado
         b cicloUnidadesHardware
 
 
 completado:
-    @@Apagar LED.
+
+    @Display unidades en 0
+    @Display decenas en 0
+
+    @@Encender LED.
     mov r0,#17
     mov r1,#1
     bl SetGpio
@@ -237,6 +255,7 @@ error_ingreso:
 fin:
     ldr r0, =salir
     bl puts
+
     mov r7,#1
     swi 0
 
@@ -276,7 +295,7 @@ ingreso_unidades: .asciz "Ingreso unidades. "
 
 mensaje_debug: .asciz "Debug"
 
-mensaje_error: .asciz "El dato que ingresó no es válido (0-99). "
+mensaje_error: .asciz "El dato que ingresó no es válido. "
 
 mensaje_ingreso:
     .asciz "Ingrese una opción: "
