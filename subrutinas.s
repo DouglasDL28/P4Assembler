@@ -38,3 +38,40 @@ mov r0,r5
 
 pop {pc}
 
+.global SetDisplay
+SetDisplay:
+numero          .req r0
+array           .req r1
+contador        .req r5
+valor           .req r6
+
+push {lr}
+mov valor,#0
+mov contador,#4 @Inicializar el contador en 4
+
+recorrido:
+    LDR r4,[array],#4
+
+    MOV r8,numero
+
+    AND r8,#1
+    LSR r8,valor
+
+    MOV r0,r4
+    MOV r1,r8
+    BL SetGpio
+
+    SUB contador,#1
+    ADD valor,#1
+
+    CMP contador,#0
+    BNE recorrido
+
+.unreq numero
+.unreq array
+.unreq contador
+.unreq valor
+
+pop {pc}
+
+

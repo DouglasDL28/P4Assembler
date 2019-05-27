@@ -128,8 +128,9 @@ ciclo:
 
 Software:
     @Ingreso decenas.
-    ldr r0,=ingreso_decenas
+    ldr r0,=ingreso_numero
     bl puts
+
     ldr r0,=formatoD
     ldr r1,=ingreso
     bl scanf
@@ -139,6 +140,15 @@ Software:
     cmp r9,#100
     bge error_ingreso
 
+    mov r0,decenas
+    lrd r1,=puertosDecenas
+    bl SetDisplay
+
+    mov r0,unidades
+    lrd r1,=puertosUnidades
+    bl SetDisplay
+
+    @Dividir para obtener decenas y unidades.
     mov r0,r9
     bl Division
 
@@ -147,9 +157,13 @@ Software:
 
     cicloUnidadesSoftware:
         sub unidades,#1
-        bl wait
 
-        @@Cambiar Display2
+        bl retro
+
+        @Cambiar display unidades
+        mov r0,unidades
+        lrd r1,=puertosUnidades
+        bl SetDisplay
 
         cmp unidades,#0
         beq cicloDecenasSoftware
@@ -160,7 +174,14 @@ Software:
         mov unidades,#9
 
         @Cambiar Display decenas
+        mov r0,decenas
+        lrd r1,=puertosDecenas
+        bl SetDisplay
+
         @Cambiar Display unidades
+        mov r0,unidades
+        lrd r1,=puertosUnidades
+        bl SetDisplay
 
         cmp decenas,#0
         blt completado
@@ -191,26 +212,36 @@ Hardware:
 
     sumaDecenas:
         cmp decenas,#9
-        addle decenas,#1
-        movgt decenas,#0
+        addlt decenas,#1
+        movge decenas,#0
 
-        @Mostrar en display decenas
+        @Cambiar Display decenas
+        mov r0,decenas
+        lrd r1,=puertosDecenas
+        bl SetDisplay
 
     sumaUnidades:
         @Suma a unidades
         cmp unidades,#9
-        addle unidades,#1
-        movgt unidades,#0
+        addlt unidades,#1
+        movge unidades,#0
 
-        @Mostrar en display decenas
+        @Cambiar Display unidades
+        mov r0,unidades
+        lrd r1,=puertosUnidades
+        bl SetDisplay
 
         b Hardware
 
     cicloUnidadesHardware:
         sub unidades,#1
-        bl wait
 
-        @@Cambiar Display2
+        bl retro
+
+        @Cambiar Display unidades
+        mov r0,unidades
+        lrd r1,=puertosUnidades
+        bl SetDisplay
 
         cmp unidades,#0
         beq cicloDecenasHardware
@@ -221,7 +252,14 @@ Hardware:
         mov unidades,#9
 
         @Cambiar Display decenas
+        mov r0,decenas
+        lrd r1,=puertosDecenas
+        bl SetDisplay
+
         @Cambiar Display unidades
+        mov r0,unidades
+        lrd r1,=puertosUnidades
+        bl SetDisplay
 
         cmp decenas,#0
         blt completado
@@ -230,14 +268,22 @@ Hardware:
 
 completado:
 
-    @Display unidades en 0
     @Display decenas en 0
+    mov r0,#0
+    ldr r1,=puertosDecenas
+    bl SetDisplay
+
+    @Display unidades en 0
+    mov r0,#0
+    ldr r1,=puertosUnidades
+    bl SetDisplay
 
     @@Encender LED.
     mov r0,#17
     mov r1,#1
     bl SetGpio
 
+    bl retro
     bl retro
     bl retro
     bl retro
@@ -286,23 +332,34 @@ Division:
 .data
 .align 2
 .global myloc
+.global puertosDecenas
+.global puertosUnidades
 
 myloc: .word 0
 
-ingreso_decenas: .asciz "Ingrese las decenas. "
+ingreso_numero:    .asciz "Ingrese un número (0-99). "
 
-ingreso_unidades: .asciz "Ingreso unidades. "
+ingreso_unidades:   .asciz "Ingreso unidades. "
 
-mensaje_debug: .asciz "Debug"
+mensaje_debug:      .asciz "Debug"
 
-mensaje_error: .asciz "El dato que ingresó no es válido. "
+mensaje_error:      .asciz "El dato que ingresó no es válido. "
 
-mensaje_ingreso:
-    .asciz "Ingrese una opción: "
+mensaje_ingreso:    .asciz "Ingrese una opción: "
 
 formatoD: .asciz "%d"
 
 ingreso: .word 0
 
-salir: 
-    .asciz "Se ha salido del programa. "
+salir: .asciz "Se ha salido del programa. "
+
+puertosDecenas:     .word 27,22,14,15
+
+puertosUnidades:    .word 18,25,8,7
+
+mov r0,#9
+ldr r1,=puertosDecenas
+bl SetDisplay
+
+0110
+
