@@ -1,7 +1,7 @@
 
 .global Division
 Division:
-contador    .req r1
+contador    .req r2
 divisor     .req r5
 dividendo   .req r0
 
@@ -21,6 +21,8 @@ mov r1,r0   @guarda el residuo
 mov r0,r2   @guarda el cociente
 mov pc,lr
 
+
+
 .global GetGpio
 GetGpio:
 @Revision del boton
@@ -38,31 +40,34 @@ mov r0,r5
 
 pop {pc}
 
+
 .global SetDisplay
 SetDisplay:
-numero          .req r0
-array           .req r1
-contador        .req r5
-valor           .req r6
+@Recibe número en R0
+@Recibo arreglo en R1
+
+numero          .req r10
+array           .req r11
+contador        .req r9
 
 push {lr}
-mov valor,#0
 mov contador,#4 @Inicializar el contador en 4
+mov array,r1
+mov numero,r0
 
 recorrido:
     LDR r4,[array],#4
 
-    MOV r8,numero
+    mov r8,numero
 
-    AND r8,#1
-    LSR r8,valor
+    AND R8,#1
+    LSR numero,#1
 
-    MOV r0,r4
-    MOV r1,r8
+    mov r0,r4
+    mov r1,r8
     BL SetGpio
 
     SUB contador,#1
-    ADD valor,#1
 
     CMP contador,#0
     BNE recorrido
@@ -70,7 +75,6 @@ recorrido:
 .unreq numero
 .unreq array
 .unreq contador
-.unreq valor
 
 pop {pc}
 
