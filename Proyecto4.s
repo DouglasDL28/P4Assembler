@@ -7,7 +7,7 @@
 
 @ ----------------------------------
 @ Build:
-@ gcc -o 4 4Proyecto.s gpio0_2.s phys_to_virt.c timerLib.c timer.s subrutinas.s
+@ gcc -o 4 Proyecto4.s gpio0_2.s phys_to_virt.c timerLib.c timer.s subrutinas.s
 @ -----------------------------------
 
 .text
@@ -159,22 +159,22 @@ Software:
     mov unidades,r1     @ RESIDUO / UNIDADES
 
     @Display decenas en 0
-    mov r0,#0
+    mov r0,decenas
     ldr r1,=puertosDecenas
     bl SetDisplay
 
     @Display unidades en 0
-    mov r0,#0
+    mov r0,unidades
     ldr r1,=puertosUnidades
     bl SetDisplay
-
+p
     cicloUnidadesSoftware:
         sub unidades,#1
 
         bl retro
 
         @Display unidades en 0
-        mov r0,#0
+        mov r0,unidades
         ldr r1,=puertosUnidades
         bl SetDisplay
 
@@ -190,12 +190,12 @@ Software:
         blt completado
 
         @Display decenas en 0
-        mov r0,#0
+        mov r0,decenas
         ldr r1,=puertosDecenas
         bl SetDisplay
 
         @Display unidades en 0
-        mov r0,#0
+        mov r0,unidades
         ldr r1,=puertosUnidades
         bl SetDisplay
 
