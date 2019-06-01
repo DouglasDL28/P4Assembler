@@ -2,11 +2,11 @@
 .global Division
 Division:
 contador    .req r2
-divisor     .req r5
+divisor     .req r1
 dividendo   .req r0
 
 mov contador,#0 @inicializar contador
-mov divisor,#10
+
 ciclo:
 cmp divisor, dividendo
 bgt fin
@@ -29,7 +29,7 @@ GetGpio:
 @Para revisar si el nivel de un GPIO esta en alto o bajo
 @se lee en la direccion 0x3F200034 para los GPIO 0-31
 
-push {lr}
+push {r1-r12,lr}
 ldr r6, =myloc
 ldr r8, [r6]        @ obtener direccion de la memoria virtual
 ldr r5,[r8,#0x34]    @Direccion r0+0x34:lee en r5 estado de puertos de entrada
@@ -38,7 +38,7 @@ lsl r7,r0
 and r5,r7         @se revisa el bit 14 (puerto de entrada)
 mov r0,r5
 
-pop {pc}
+pop {r1-r12,pc}
 
 
 .global SetDisplay
@@ -50,32 +50,31 @@ numero          .req r10
 array           .req r11
 contador        .req r9
 
-push {lr}
+push {r0-r12,lr}
 mov contador,#4 @Inicializar el contador en 4
 mov array,r1
 mov numero,r0
 
 recorrido:
-    LDR r4,[array],#4
+LDR r4,[array],#4
 
-    mov r8,numero
+mov r8,numero
 
-    AND R8,#1
-    LSR numero,#1
+AND R8,#1
+LSR numero,#1
 
-    mov r0,r4
-    mov r1,r8
-    BL SetGpio
+mov r0,r4
+mov r1,r8
+BL SetGpio
 
-    SUB contador,#1
+SUB contador,#1
 
-    CMP contador,#0
-    BNE recorrido
+CMP contador,#0
+BNE recorrido
 
 .unreq numero
 .unreq array
 .unreq contador
 
-pop {pc}
-
+pop {r0-r12,pc}
 

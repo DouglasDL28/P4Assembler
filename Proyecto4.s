@@ -1,5 +1,5 @@
 @ Maria Isabel Ortiz Naranjo
-@ Douglas de León 
+@ Douglas de León
 @ Carnet: 18176
 @ Carnet: 18037
 @Proyecto#4
@@ -15,8 +15,8 @@
 .global main
 .type main,%function
 
-main: 
-    stmfd sp!, {lr}
+main:
+stmfd sp!, {lr}
 
 @utilizando la biblioteca GPIO (gpio0.s)
 bl GetGpioAddress     @solo se llama una vez
@@ -25,19 +25,19 @@ decenas     .req r10
 unidades    .req r11
 
 @Botón DECENAS
-@GPIO para lectura (entrada) puerto 2
+@GPIO para lectura (entrada) puerto 26
 mov r0,#2
 mov r1,#0
 bl SetGpioFunction
 
 @Botón UNIDADES
-@GPIO para lectura (entrada) puerto 3
+@GPIO para lectura (entrada) puerto 19
 mov r0,#3
 mov r1,#0
 bl SetGpioFunction
 
 @Botón INICIO
-@GPIO para lectura (entrada) puerto 4
+@GPIO para lectura (entrada) puerto 13
 mov r0,#4
 mov r1,#0
 bl SetGpioFunction
@@ -78,7 +78,7 @@ mov r0,#18
 mov r1,#1
 bl SetGpioFunction
 
-@Display2
+@Display20x31
 @GPIO para escritura (salida) puerto 25
 mov r0,#25
 mov r1,#1
@@ -97,239 +97,279 @@ mov r1,#1
 bl SetGpioFunction
 
 ciclo:
-    @Iniciar
-    mov decenas,#0  @Decenas
-    mov unidades,#0  @Unidades
 
-    @Display decenas en 0
-    mov r0,#0
-    ldr r1,=puertosDecenas
-    bl SetDisplay
+ldr r0,=menu
+bl puts
 
-    @Display unidades en 0
-    mov r0,#0
-    ldr r1,=puertosUnidades
-    bl SetDisplay
+@Iniciar
+mov decenas,#0  @Decenas
+mov unidades,#0  @Unidades
 
-    @@Apagar LED.
-    mov r0,#17
-    mov r1,#0
-    bl SetGpio
+@Display decenas en 0
+mov r0,#0
+ldr r1,=puertosDecenas
+bl SetDisplay
 
-    ldr r0, =mensaje_ingreso
-    bl puts
+@Display unidades en 0
+mov r0,#0
+ldr r1,=puertosUnidades
+bl SetDisplay
 
-    bl getchar
-    mov r5,r0
+@@Apagar LED.
+mov r0,#17
+mov r1,#0
+bl SetGpio
 
-    @@Por software
-    cmp r5,#0x31    @Comparar con '1'
-    beq Software
+ldr r0, =mensaje_ingreso
+bl puts
 
-    @@Por hardware
-    cmp r5,#0x32    @Comparar con '2'
-    beq Hardware
+bl getchar
+mov r5,r0
 
-    @Salir del programa
-    cmp r5,#0x33    @Comparar con '3'
-    beq fin
+@@Por software
+cmp r5,#0x31    @Comparar con '1'
+beq Software
 
-    b error_ingreso
+@@Por hardware
+cmp r5,#0x32    @Comparar con '2'
+beq Hardware
+
+@Salir del programa
+cmp r5,#0x33    @Comparar con '3'
+beq fin
+
+b error_ingreso
 
 Software:
-    @Ingreso decenas.
-    ldr r0,=ingreso_numero
-    bl puts
+@Ingreso decenas.
+ldr r0,=ingreso_numero
+bl puts
 
-    ldr r0,=formatoD
-    ldr r1,=ingreso
-    bl scanf
+ldr r0,=formatoD
+ldr r1,=ingreso
+bl scanf
 
-    ldr r1,=ingreso
-    ldr r9,[r1]
+ldr r1,=ingreso
+ldr r9,[r1]
 
-    cmp r9,#100
-    bge error_ingreso
+cmp r9,#100
+bge error_ingreso
 
-    @Dividir para obtener decenas y unidades.
-    mov r0,r9
-    bl Division
+@Dividir para obtener decenas y unidades.
+mov r0,r9
+mov r1,#10
+bl Division
 
-    mov decenas,r0     @ COCIENTE / DECENAS
-    mov unidades,r1     @ RESIDUO / UNIDADES
+mov decenas,r0     @ COCIENTE / DECENAS
+mov unidades,r1     @ RESIDUO / UNIDADES
 
-    @Display decenas en 0
-    mov r0,decenas
-    ldr r1,=puertosDecenas
-    bl SetDisplay
+/*push {r0-r12}
+ ldr r0,=impresionD
+ mov r1,decenas
+ bl printf
+ 
+ ldr r0,=impresionD
+ mov r1,unidades
+ bl printf
+ pop {r0-r12} */
 
-    @Display unidades en 0
-    mov r0,unidades
-    ldr r1,=puertosUnidades
-    bl SetDisplay
-p
-    cicloUnidadesSoftware:
-        sub unidades,#1
+@Display decenas
+mov r0,decenas
+ldr r1,=puertosDecenas
+bl SetDisplay
 
-        bl retro
+@Display unidades
+mov r0,unidades
+ldr r1,=puertosUnidades
+bl SetDisplay
 
-        @Display unidades en 0
-        mov r0,unidades
-        ldr r1,=puertosUnidades
-        bl SetDisplay
-
-        cmp unidades,#0
-        beq cicloDecenasSoftware
-        b cicloUnidadesSoftware
-
-    cicloDecenasSoftware:
-        sub decenas,#1
-        mov unidades,#9
-
-        cmp decenas,#0
-        blt completado
-
-        @Display decenas en 0
-        mov r0,decenas
-        ldr r1,=puertosDecenas
-        bl SetDisplay
-
-        @Display unidades en 0
-        mov r0,unidades
-        ldr r1,=puertosUnidades
-        bl SetDisplay
+bl retro
 
 
-        b cicloUnidadesSoftware
+
+/*    @Display decenas en 0
+ mov r0,#0
+ ldr r1,=puertosDecenas
+ bl SetDisplay
+ 
+ @Display unidades en 0
+ mov r0,#0
+ ldr r1,=puertosUnidades
+ bl SetDisplay
+ */
+cicloUnidadesSoftware:
+sub unidades,#1
+
+@Display unidades en 0
+mov r0,unidades
+ldr r1,=puertosUnidades
+bl SetDisplay
+
+bl retro
+
+cmp unidades,#0
+beq cicloDecenasSoftware
+b cicloUnidadesSoftware
+
+cicloDecenasSoftware:
+sub decenas,#1
+mov unidades,#9
+
+cmp decenas,#0
+blt completado
+
+@Display decenas en 0
+mov r0,decenas
+ldr r1,=puertosDecenas
+bl SetDisplay
+
+@Display unidades en 0
+mov r0,unidades
+ldr r1,=puertosUnidades
+bl SetDisplay
+
+bl retro
+
+b cicloUnidadesSoftware
 
 
 Hardware:
-    @@ Verificar botón de decenas
-    mov r0,#2
-    bl GetGpio
-    mov r5,r0
-    cmp r5,#0
-    bne sumaDecenas
 
-    @@ Verificar botón de unidades
-    mov r0,#3
-    bl GetGpio
-    mov r5,r0
-    cmp r5,#0
-    bne sumaUnidades
+@@Verifica botón decenas
+mov r0,#26
+bl GetGpio
+mov r5,r0
 
-    @@ Verificar botón de inicio
-    mov r0,#4
-    bl GetGpio
-    mov r5,r0
-    cmp r5,#0
-    bne cicloUnidadesHardware
+teq r5,#0
+bne sumaDecenas
 
-    sumaDecenas:
-        cmp decenas,#9
-        addlt decenas,#1
-        movge decenas,#0
+@@Verifica botón unidades
+mov r0,#19
+bl GetGpio
+mov r5,r0
+teq r5,#0
+bne sumaUnidades
 
-        @Cambiar Display decenas
-        mov r0,decenas
-        ldr r1,=puertosDecenas
-        bl SetDisplay
+@@Verifica botón inicio
+mov r0,#13
+bl GetGpio
+mov r5,r0
+teq r5,#0
+bne cicloUnidadesHardware
 
-    sumaUnidades:
-        @Suma a unidades
-        cmp unidades,#9
-        addlt unidades,#1
-        movge unidades,#0
+b Hardware
 
-        @Cambiar Display unidades
-        mov r0,unidades
-        ldr r1,=puertosUnidades
-        bl SetDisplay
+sumaDecenas:
+cmp decenas,#9
+addlt decenas,#1
+movge decenas,#0
 
-        b Hardware
+@Cambiar Display decenas
+mov r0,decenas
+ldr r1,=puertosDecenas
+bl SetDisplay
+bl retro
 
-    cicloUnidadesHardware:
-        sub unidades,#1
+b Hardware
 
-        bl retro
+sumaUnidades:
+@Suma a unidades
+cmp unidades,#9
+addlt unidades,#1
+movge unidades,#0
 
-        @Cambiar Display unidades
-        mov r0,unidades
-        ldr r1,=puertosUnidades
-        bl SetDisplay
+@Cambiar Display unidades
+mov r0,unidades
+ldr r1,=puertosUnidades
+bl SetDisplay
+bl retro
 
-        cmp unidades,#0
-        beq cicloDecenasHardware
-        b cicloUnidadesHardware
+b Hardware
 
-    cicloDecenasHardware:
-        sub decenas,#1
-        mov unidades,#9
+cicloUnidadesHardware:
+sub unidades,#1
 
-        cmp decenas,#0
-        blt completado
+@Display unidades en 0
+mov r0,unidades
+ldr r1,=puertosUnidades
+bl SetDisplay
 
-        @Cambiar Display decenas
-        mov r0,decenas
-        ldr r1,=puertosDecenas
-        bl SetDisplay
+bl retro
 
-        @Cambiar Display unidades
-        mov r0,unidades
-        ldr r1,=puertosUnidades
-        bl SetDisplay
+cmp unidades,#0
+beq cicloDecenasHardware
+b cicloUnidadesHardware
 
-        b cicloUnidadesHardware
+cicloDecenasHardware:
+sub decenas,#1
+mov unidades,#9
+
+cmp decenas,#0
+blt completado
+
+@Display decenas en 0
+mov r0,decenas
+ldr r1,=puertosDecenas
+bl SetDisplay
+
+@Display unidades en 0
+mov r0,unidades
+ldr r1,=puertosUnidades
+bl SetDisplay
+
+bl retro
+
+b cicloUnidadesHardware
 
 
 completado:
 
-    @Display decenas en 0
-    @mov r0,#0
-    @ldr r1,=puertosDecenas
-    @bl SetDisplay
+@Display decenas en 0
+@mov r0,#0
+@ldr r1,=puertosDecenas
+@bl SetDisplay
 
-    @Display unidades en 0
-    @mov r0,#0
-    @ldr r1,=puertosUnidades
-    @bl SetDisplay
+@Display unidades en 0
+@mov r0,#0
+@ldr r1,=puertosUnidades
+@bl SetDisplay
 
-    @@Encender LED.
-    mov r0,#17
-    mov r1,#1
-    bl SetGpio
+@@Encender LED.
+mov r0,#17
+mov r1,#1
+bl SetGpio
 
-    bl retro
-    bl retro
-    bl retro
-    bl retro
+bl retro
+bl retro
+bl retro
+bl retro
 
-    bl getchar
-    b ciclo
+bl getchar
+b ciclo
 
-    
+
 error_ingreso:
-    ldr r0, =mensaje_error
-    bl puts
+ldr r0, =mensaje_error
+bl puts
 
-    bl getchar
-    b ciclo
+bl getchar
+b ciclo
 
 fin:
-    ldr r0, =salir
-    bl puts
+ldr r0, =salir
+bl puts
 
-    mov r7,#1
-    swi 0
+mov r7,#1
+swi 0
 
 .data
 .align 2
-.global myloc
+
 .global puertosDecenas
 .global puertosUnidades
 .global impresionD
 
-myloc: .word 0
+menu:   .asciz "MENU: \n 1. Prueba por Software. \n 2. Prueba por Hardware \n 3. Salir."
 
 mensaje_decenas: .asciz "Decenas: "
 
@@ -356,4 +396,8 @@ salir: .asciz "Se ha salido del programa. "
 puertosDecenas:     .word 27,22,14,15
 
 puertosUnidades:    .word 18,25,8,7
+
+.global myloc
+myloc: .word 0
+.end
 
