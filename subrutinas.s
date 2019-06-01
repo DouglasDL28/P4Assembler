@@ -60,5 +60,28 @@ mov contador,#4 @Inicializar el contador en 4
 mov array,r1
 mov numero,r0
 
+recorrido:
+LDR r4,[array],#4
+
+mov r8,numero
+
+AND R8,#1
+LSR numero,#1
+
+mov r0,r4
+mov r1,r8
+BL SetGpio
+
+SUB contador,#1
+
+CMP contador,#0
+BNE recorrido
+
+.unreq numero
+.unreq array
+.unreq contador
+
+pop {r0-r12,pc}
+
 
 
